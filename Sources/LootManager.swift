@@ -9,32 +9,55 @@
 import Foundation
 import StoreKit
 
-private class LootManager: NSObject {
+internal protocol LootManagerDelegate {
+    func loot(_ lootManager: LootManager, didFinishPurchaseWithResult result: Loot.PurchaseResult) -> Void
+    func loot(_ lootManager: LootManager, didFinishRestoreWithResult result: Loot.RestoreResult) -> Void
+}
+
+internal class LootManager: NSObject {
     
-    let productID: String
+    var productIDs: Set<String>
+    var products: [SKProduct] = []
+    
+    var delegate: LootManagerDelegate?
     
     var canMakePurchases: Bool {
         return SKPaymentQueue.canMakePayments()
     }
     
-    init(productID: String) {
-        self.productID = productID
+    init(productIDs: Set<String>) {
+        self.productIDs = productIDs
+        
+        super.init()
+        
+        let request = SKProductsRequest(productIdentifiers: self.productIDs)
+        request.delegate = self
+        request.start()
     }
 
-    public func beginPurchase() {
+    public func beginPurchase(with productID: String) {
         if self.canMakePurchases {
-            let request = SKProductsRequest(productIdentifiers: [self.productID])
-            request.delegate = self
-            request.start()
+            guard let product = self.products.first(where: { (product) -> Bool in
+                product.productIdentifier == productID
+            }) else {
+                if let delegate = self.delegate {
+                    delegate.loot(self, didFinishPurchaseWithResult: .failure(productID))
+                }
+                return
+            }
+            
+            let payment = SKPayment(product: product)
+
+            SKPaymentQueue.default().add(self)
+            SKPaymentQueue.default().add(payment)
         } else {
-            // Otherwise, tell the user that
-            // they are not authorized to make payments,
-            // due to parental controls, etc
+            if let delegate = self.delegate {
+                delegate.loot(self, didFinishPurchaseWithResult: .failure(productID))
+            }
         }
     }
 
-    public func beginRestorePurchases() {
-        // restore purchases, and give responses to self
+    public func beginRestore() {
         SKPaymentQueue.default().add(self)
         SKPaymentQueue.default().restoreCompletedTransactions()
     }
@@ -44,23 +67,7 @@ private class LootManager: NSObject {
 extension LootManager: SKProductsRequestDelegate {
     
     func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
-        // Let's try to get the first product from the response
-        // to the request
-//        if let product = response.products.first {
-//            let payment = SKPayment(product: product)
-//
-//            SKPaymentQueue.default().add(self)
-//            SKPaymentQueue.default().add(payment)
-//        } else {
-//            // Something went wrong! It is likely that either
-//            // the user doesn't have internet connection, or
-//            // your product ID is wrong!
-//            //
-//            // Tell the user in requestFailed() by sending an alert,
-//            // or something of the sort
-//
-//            //RemoveAdsManager.removeAdsFailure()
-//        }
+        self.products = response.products
     }
     
 }
@@ -69,62 +76,54 @@ extension LootManager: SKPaymentTransactionObserver {
     
     func paymentQueue(_ queue: SKPaymentQueue, updatedTransactions transactions: [SKPaymentTransaction]) {
         for transaction in transactions {
-            // get the producted ID from the transaction
             let productID = transaction.payment.productIdentifier
-
-            // In this case, we have only one IAP, so we don't need to check
-            // what IAP it is.
-            // However, if you have multiple IAPs, you'll need to use productID
-            // to check what functions you should run here!
 
             switch transaction.transactionState {
             case .purchasing:
-                // if the user is currently purchasing the IAP,
-                // we don't need to do anything.
-                //
-                // You could use this to show the user
-                // an activity indicator, or something like that
                 break
             case .purchased:
-                // the user successfully purchased the IAP!
-                //RemoveAdsManager.removeAdsSuccess()
+                if let delegate = self.delegate {
+                    delegate.loot(self, didFinishPurchaseWithResult: .success(productID))
+                }
                 SKPaymentQueue.default().finishTransaction(transaction)
             case .restored:
-                // the user restored their IAP!
-                //IAPTestingHandler.restoreRemoveAdsSuccess()
+                if let delegate = self.delegate {
+                    delegate.loot(self, didFinishRestoreWithResult: .success(productID))
+                }
                 SKPaymentQueue.default().finishTransaction(transaction)
             case .failed:
-                // The transaction failed!
-                //RemoveAdsManager.removeAdsFailure()
-                // finish the transaction
+                if let delegate = self.delegate {
+                    delegate.loot(self, didFinishPurchaseWithResult: .failure(productID))
+                }
                 SKPaymentQueue.default().finishTransaction(transaction)
             case .deferred:
-                // This happens when the IAP needs an external action
-                // in order to proceeded, like Ask to Buy
-                //RemoveAdsManager.removeAdsDeferred()
+                if let delegate = self.delegate {
+                    delegate.loot(self, didFinishPurchaseWithResult: .deferred(productID))
+                }
+                break
+            default:
                 break
             }
         }
     }
 
     func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
-        // For every transaction in the transaction queue...
-        for transaction in queue.transactions{
-            // If that transaction was restored
-            if transaction.transactionState == .restored {
-                // get the producted ID from the transaction
-                let productID = transaction.payment.productIdentifier
-
-                // In this case, we have only one IAP, so we don't need to check
-                // what IAP it is. However, this is useful if you have multiple IAPs!
-                // You'll need to figure out which one was restored
-                if(productID.lowercased() == self.productID.lowercased()){
-                    // Restore the user's purchases
-                    //RemoveAdsManager.restoreRemoveAdsSuccess()
+        for transaction in queue.transactions {
+            let productID = transaction.payment.productIdentifier
+            
+            switch transaction.transactionState {
+            case .restored:
+                if let delegate = self.delegate {
+                    delegate.loot(self, didFinishRestoreWithResult: .success(productID))
                 }
-
-                // finish the payment
                 SKPaymentQueue.default().finishTransaction(transaction)
+            case .failed:
+                if let delegate = self.delegate {
+                    delegate.loot(self, didFinishRestoreWithResult: .failure(productID))
+                }
+                SKPaymentQueue.default().finishTransaction(transaction)
+            default:
+                break
             }
         }
     }
