@@ -35,25 +35,25 @@ internal class LootManager: NSObject {
         request.start()
     }
 
-    public func beginPurchase(with productID: String) {
+    public func beginPurchase(with productIDs: [String]) {
         if self.canMakePurchases {
-            guard let product = self.products.first(where: { (product) -> Bool in
-                product.productIdentifier == productID
-            }) else {
-                if let delegate = self.delegate {
-                    delegate.loot(self, didFinishPurchaseWithResult: .failure(productID))
-                }
-                return
-            }
+//            guard let product = self.products.first(where: { (product) -> Bool in
+//                product.productIdentifier == productID
+//            }) else {
+//                if let delegate = self.delegate {
+//                    delegate.loot(self, didFinishPurchaseWithResult: .failure(productID))
+//                }
+//                return
+//            }
             
-            let payment = SKPayment(product: product)
-
-            SKPaymentQueue.default().add(self)
-            SKPaymentQueue.default().add(payment)
+//            let payment = SKPayment(product: product)
+//
+//            SKPaymentQueue.default().add(self)
+//            SKPaymentQueue.default().add(payment)
         } else {
-            if let delegate = self.delegate {
-                delegate.loot(self, didFinishPurchaseWithResult: .failure(productID))
-            }
+//            if let delegate = self.delegate {
+//                delegate.loot(self, didFinishPurchaseWithResult: .failure(productID))
+//            }
         }
     }
 

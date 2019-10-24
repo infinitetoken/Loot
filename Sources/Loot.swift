@@ -46,8 +46,8 @@ public struct Loot {
     
     // MARK: - Methods
     
-    public func purchase(productID: String) {
-        self.manager.beginPurchase(with: productID)
+    public func purchase(productIDs: [String]) {
+        self.manager.beginPurchase(with: productIDs)
     }
     
     public func restore() {
