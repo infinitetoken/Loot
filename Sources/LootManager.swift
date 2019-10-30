@@ -10,8 +10,7 @@ import Foundation
 import StoreKit
 
 internal protocol LootManagerDelegate {
-    func loot(_ lootManager: LootManager, didFinishPurchaseWithResult result: Loot.PurchaseResult) -> Void
-    func loot(_ lootManager: LootManager, didFinishRestoreWithResult result: Loot.RestoreResult) -> Void
+    func loot(_ lootManager: LootManager, didFinishWithResult result: Loot.Result) -> Void
 }
 
 internal class LootManager: NSObject {
@@ -21,9 +20,7 @@ internal class LootManager: NSObject {
     
     var delegate: LootManagerDelegate?
     
-    var canMakePurchases: Bool {
-        return SKPaymentQueue.canMakePayments()
-    }
+    var canMakePurchases: Bool { SKPaymentQueue.canMakePayments() }
     
     init(productIDs: Set<String>) {
         self.productIDs = productIDs
@@ -36,24 +33,17 @@ internal class LootManager: NSObject {
     }
 
     public func beginPurchase(with productIDs: [String]) {
-        if self.canMakePurchases {
-//            guard let product = self.products.first(where: { (product) -> Bool in
-//                product.productIdentifier == productID
-//            }) else {
-//                if let delegate = self.delegate {
-//                    delegate.loot(self, didFinishPurchaseWithResult: .failure(productID))
-//                }
-//                return
-//            }
-            
-//            let payment = SKPayment(product: product)
-//
-//            SKPaymentQueue.default().add(self)
-//            SKPaymentQueue.default().add(payment)
-        } else {
-//            if let delegate = self.delegate {
-//                delegate.loot(self, didFinishPurchaseWithResult: .failure(productID))
-//            }
+        productIDs.forEach { (productID) in
+            if self.canMakePurchases {
+                if let product = self.products.first(where: { $0.productIdentifier == productID }) {
+                    SKPaymentQueue.default().add(self)
+                    SKPaymentQueue.default().add(SKPayment(product: product))
+                } else {
+                    self.delegate?.loot(self, didFinishWithResult: .failure(productID))
+                }
+            } else {
+                self.delegate?.loot(self, didFinishWithResult: .failure(productID))
+            }
         }
     }
 
@@ -82,24 +72,16 @@ extension LootManager: SKPaymentTransactionObserver {
             case .purchasing:
                 break
             case .purchased:
-                if let delegate = self.delegate {
-                    delegate.loot(self, didFinishPurchaseWithResult: .success(productID))
-                }
+                self.delegate?.loot(self, didFinishWithResult: .success(productID))
                 SKPaymentQueue.default().finishTransaction(transaction)
             case .restored:
-                if let delegate = self.delegate {
-                    delegate.loot(self, didFinishRestoreWithResult: .success(productID))
-                }
+                self.delegate?.loot(self, didFinishWithResult: .success(productID))
                 SKPaymentQueue.default().finishTransaction(transaction)
             case .failed:
-                if let delegate = self.delegate {
-                    delegate.loot(self, didFinishPurchaseWithResult: .failure(productID))
-                }
+                self.delegate?.loot(self, didFinishWithResult: .failure(productID))
                 SKPaymentQueue.default().finishTransaction(transaction)
             case .deferred:
-                if let delegate = self.delegate {
-                    delegate.loot(self, didFinishPurchaseWithResult: .deferred(productID))
-                }
+                self.delegate?.loot(self, didFinishWithResult: .deferred(productID))
                 break
             default:
                 break
@@ -113,14 +95,10 @@ extension LootManager: SKPaymentTransactionObserver {
             
             switch transaction.transactionState {
             case .restored:
-                if let delegate = self.delegate {
-                    delegate.loot(self, didFinishRestoreWithResult: .success(productID))
-                }
+                self.delegate?.loot(self, didFinishWithResult: .success(productID))
                 SKPaymentQueue.default().finishTransaction(transaction)
             case .failed:
-                if let delegate = self.delegate {
-                    delegate.loot(self, didFinishRestoreWithResult: .failure(productID))
-                }
+                self.delegate?.loot(self, didFinishWithResult: .failure(productID))
                 SKPaymentQueue.default().finishTransaction(transaction)
             default:
                 break
