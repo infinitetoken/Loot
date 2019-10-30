@@ -27,7 +27,7 @@ public struct Loot {
     
     public var canMakePurchases: Bool { self.manager.canMakePurchases }
     
-    internal let handler: ((Loot.Result) -> ())?
+    public var handler: ((Loot.Result) -> ())?
     
     // MARK: - Lifecycle
     
