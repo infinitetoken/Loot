@@ -31,7 +31,7 @@ public struct Loot {
     
     // MARK: - Lifecycle
     
-    init(productIDs: [String], handler: @escaping (Loot.Result) -> ()) {
+    public init(productIDs: [String], handler: @escaping (Loot.Result) -> ()) {
         self.productIDs = productIDs
         self.handler = handler
         
