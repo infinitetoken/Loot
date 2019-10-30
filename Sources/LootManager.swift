@@ -33,6 +33,8 @@ internal class LootManager: NSObject {
     }
 
     public func beginPurchase(with productIDs: [String]) {
+        print("identifiers: \(self.products.map { $0.productIdentifier })")
+        
         productIDs.forEach { (productID) in
             if self.canMakePurchases {
                 if let product = self.products.first(where: { $0.productIdentifier == productID }) {
@@ -57,6 +59,7 @@ internal class LootManager: NSObject {
 extension LootManager: SKProductsRequestDelegate {
     
     func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
+        print(response.products)
         self.products = response.products
     }
     
