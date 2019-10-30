@@ -27,11 +27,11 @@ public struct Loot {
     
     public var canMakePurchases: Bool { self.manager.canMakePurchases }
     
-    internal let handler: (Loot.Result) -> ()
+    internal let handler: ((Loot.Result) -> ())?
     
     // MARK: - Lifecycle
     
-    public init(productIDs: [String], handler: @escaping (Loot.Result) -> ()) {
+    public init(productIDs: [String], handler: ((Loot.Result) -> ())?) {
         self.productIDs = productIDs
         self.handler = handler
         
@@ -64,7 +64,7 @@ extension Loot: LootManagerDelegate {
             UserDefaults.standard.synchronize()
         }
         
-        self.handler(result)
+        self.handler?(result)
     }
 
 }
