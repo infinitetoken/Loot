@@ -8,12 +8,15 @@
 
 import Foundation
 import StoreKit
+import Lumber
 
 internal protocol LootManagerDelegate {
     func loot(_ lootManager: LootManager, didFinishWithResult result: Loot.Result) -> Void
 }
 
 internal class LootManager: NSObject {
+    
+    var lumber: Lumber = Lumber()
     
     var productIDs: Set<String>
     var products: [SKProduct] = []
@@ -27,13 +30,15 @@ internal class LootManager: NSObject {
         
         super.init()
         
+        self.lumber.debug(message: "Begin Product Request")
+        
         let request = SKProductsRequest(productIdentifiers: self.productIDs)
         request.delegate = self
         request.start()
     }
 
     public func beginPurchase(with productIDs: [String]) {
-        print("identifiers: \(self.products.map { $0.productIdentifier })")
+        self.lumber.debug(message: "Begin Purchase: \(productIDs)")
         
         productIDs.forEach { (productID) in
             if self.canMakePurchases {
@@ -41,15 +46,21 @@ internal class LootManager: NSObject {
                     SKPaymentQueue.default().add(self)
                     SKPaymentQueue.default().add(SKPayment(product: product))
                 } else {
+                    self.lumber.debug(message: "No products matched productIDs")
+                    
                     self.delegate?.loot(self, didFinishWithResult: .failure(productID))
                 }
             } else {
+                self.lumber.debug(message: "Product purchases unavailable!")
+                
                 self.delegate?.loot(self, didFinishWithResult: .failure(productID))
             }
         }
     }
 
     public func beginRestore() {
+        self.lumber.debug(message: "Begin Restore")
+        
         SKPaymentQueue.default().add(self)
         SKPaymentQueue.default().restoreCompletedTransactions()
     }
@@ -59,8 +70,9 @@ internal class LootManager: NSObject {
 extension LootManager: SKProductsRequestDelegate {
     
     func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
-        print(response.products)
         self.products = response.products
+        
+        self.lumber.debug(message: "Products Received: \(self.products)")
     }
     
 }
@@ -71,6 +83,9 @@ extension LootManager: SKPaymentTransactionObserver {
         for transaction in transactions {
             let productID = transaction.payment.productIdentifier
 
+            self.lumber.debug(message: "Payment Queue Updated (Product ID): \(productID)")
+            self.lumber.debug(message: "Payment Queue Updated (Transaction State): \(transaction.transactionState)")
+            
             switch transaction.transactionState {
             case .purchasing:
                 break
@@ -95,6 +110,9 @@ extension LootManager: SKPaymentTransactionObserver {
     func paymentQueueRestoreCompletedTransactionsFinished(_ queue: SKPaymentQueue) {
         for transaction in queue.transactions {
             let productID = transaction.payment.productIdentifier
+            
+            self.lumber.debug(message: "Payment Queue Restore (Product ID): \(productID)")
+            self.lumber.debug(message: "Payment Queue Restore (Transaction State): \(transaction.transactionState)")
             
             switch transaction.transactionState {
             case .restored:
