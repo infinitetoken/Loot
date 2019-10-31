@@ -45,25 +45,11 @@ public struct Loot {
     
     public func restore() { self.manager.beginRestore() }
     
-    public func isPurchased(productID: String) -> Bool { UserDefaults.standard.bool(forKey: productID) }
-    
 }
 
 extension Loot: LootManagerDelegate {
     
     func loot(_ lootManager: LootManager, didFinishWithResult result: Loot.Result) {
-        switch result {
-        case .success(let key):
-            UserDefaults.standard.set(true, forKey: key)
-            UserDefaults.standard.synchronize()
-        case .failure(let key):
-            UserDefaults.standard.set(false, forKey: key)
-            UserDefaults.standard.synchronize()
-        case .deferred(let key):
-            UserDefaults.standard.set(false, forKey: key)
-            UserDefaults.standard.synchronize()
-        }
-        
         self.handler?(result)
     }
 
