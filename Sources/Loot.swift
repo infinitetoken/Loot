@@ -21,7 +21,7 @@ public struct Loot {
     
     // MARK: - Properties
     
-    public var canMakePurchases: Bool { SKPaymentQueue.canMakePayments() }
+    public static var canMakePurchases: Bool { SKPaymentQueue.canMakePayments() }
     
     public var handler: ((Loot.Result) -> ())?
     
