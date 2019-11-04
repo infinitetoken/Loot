@@ -20,14 +20,14 @@ public struct Loot {
     }
     
     // MARK: - Properties
-            
+    
+    public var canMakePurchases: Bool { SKPaymentQueue.canMakePayments() }
+    
+    public var handler: ((Loot.Result) -> ())?
+    
     private let productIDs: [String]
     
     private let manager: LootManager
-    
-    public var canMakePurchases: Bool { self.manager.canMakePurchases }
-    
-    public var handler: ((Loot.Result) -> ())?
     
     // MARK: - Lifecycle
     

@@ -23,8 +23,6 @@ internal class LootManager: NSObject {
     
     var delegate: LootManagerDelegate?
     
-    var canMakePurchases: Bool { SKPaymentQueue.canMakePayments() }
-    
     init(productIDs: Set<String>) {
         self.productIDs = productIDs
         
@@ -35,15 +33,16 @@ internal class LootManager: NSObject {
         let request = SKProductsRequest(productIdentifiers: self.productIDs)
         request.delegate = self
         request.start()
+        
+        SKPaymentQueue.default().add(self)
     }
 
     public func beginPurchase(with productIDs: [String]) {
         self.lumber.debug(message: "Begin Purchase: \(productIDs)")
         
         productIDs.forEach { (productID) in
-            if self.canMakePurchases {
+            if SKPaymentQueue.canMakePayments() {
                 if let product = self.products.first(where: { $0.productIdentifier == productID }) {
-                    SKPaymentQueue.default().add(self)
                     SKPaymentQueue.default().add(SKPayment(product: product))
                 } else {
                     self.lumber.debug(message: "No products matched productIDs")
@@ -61,7 +60,6 @@ internal class LootManager: NSObject {
     public func beginRestore() {
         self.lumber.debug(message: "Begin Restore")
         
-        SKPaymentQueue.default().add(self)
         SKPaymentQueue.default().restoreCompletedTransactions()
     }
     
