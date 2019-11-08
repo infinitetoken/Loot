@@ -28,7 +28,7 @@ internal class LootManager: NSObject {
         
         super.init()
         
-        self.lumber.debug(message: "Begin Product Request")
+        self.lumber.log("Begin Product Request")
         
         let request = SKProductsRequest(productIdentifiers: self.productIDs)
         request.delegate = self
@@ -38,19 +38,19 @@ internal class LootManager: NSObject {
     }
 
     public func beginPurchase(with productIDs: [String]) {
-        self.lumber.debug(message: "Begin Purchase: \(productIDs)")
+        self.lumber.log("Begin Purchase: \(productIDs)")
         
         productIDs.forEach { (productID) in
             if SKPaymentQueue.canMakePayments() {
                 if let product = self.products.first(where: { $0.productIdentifier == productID }) {
                     SKPaymentQueue.default().add(SKPayment(product: product))
                 } else {
-                    self.lumber.debug(message: "No products matched productIDs")
+                    self.lumber.log("No products matched productIDs")
                     
                     self.delegate?.loot(self, didFinishWithResult: .failure(productID))
                 }
             } else {
-                self.lumber.debug(message: "Product purchases unavailable!")
+                self.lumber.log("Product purchases unavailable!")
                 
                 self.delegate?.loot(self, didFinishWithResult: .failure(productID))
             }
@@ -58,7 +58,7 @@ internal class LootManager: NSObject {
     }
 
     public func beginRestore() {
-        self.lumber.debug(message: "Begin Restore")
+        self.lumber.log("Begin Restore")
         
         SKPaymentQueue.default().restoreCompletedTransactions()
     }
@@ -70,7 +70,7 @@ extension LootManager: SKProductsRequestDelegate {
     func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
         self.products = response.products
         
-        self.lumber.debug(message: "Products Received: \(self.products)")
+        self.lumber.log("Products Received: \(self.products)")
     }
     
 }
@@ -81,8 +81,8 @@ extension LootManager: SKPaymentTransactionObserver {
         for transaction in transactions {
             let productID = transaction.payment.productIdentifier
 
-            self.lumber.debug(message: "Payment Queue Updated (Product ID): \(productID)")
-            self.lumber.debug(message: "Payment Queue Updated (Transaction State): \(transaction.transactionState)")
+            self.lumber.log("Payment Queue Updated (Product ID): \(productID)")
+            self.lumber.log("Payment Queue Updated (Transaction State): \(transaction.transactionState)")
             
             switch transaction.transactionState {
             case .purchasing:
@@ -109,8 +109,8 @@ extension LootManager: SKPaymentTransactionObserver {
         for transaction in queue.transactions {
             let productID = transaction.payment.productIdentifier
             
-            self.lumber.debug(message: "Payment Queue Restore (Product ID): \(productID)")
-            self.lumber.debug(message: "Payment Queue Restore (Transaction State): \(transaction.transactionState)")
+            self.lumber.log("Payment Queue Restore (Product ID): \(productID)")
+            self.lumber.log("Payment Queue Restore (Transaction State): \(transaction.transactionState)")
             
             switch transaction.transactionState {
             case .restored:
