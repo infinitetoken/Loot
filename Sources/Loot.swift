@@ -9,7 +9,7 @@
 import Foundation
 import StoreKit
 
-public struct Loot {
+public class Loot {
     
     // MARK: - Types
     
