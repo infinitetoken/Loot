@@ -11,6 +11,7 @@ import StoreKit
 import Lumber
 
 internal protocol LootManagerDelegate {
+    func loot(_ lootManager: LootManager, didBecomeReadyWithProducts products: [SKProduct]) -> Void
     func loot(_ lootManager: LootManager, didFinishWithResult result: Loot.Result) -> Void
 }
 
@@ -69,6 +70,8 @@ extension LootManager: SKProductsRequestDelegate {
     
     func productsRequest(_ request: SKProductsRequest, didReceive response: SKProductsResponse) {
         self.products = response.products
+        
+        self.delegate?.loot(self, didBecomeReadyWithProducts: self.products)
         
         self.lumber.log("Products Received: \(self.products)")
     }
