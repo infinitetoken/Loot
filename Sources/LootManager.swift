@@ -8,7 +8,6 @@
 
 import Foundation
 import StoreKit
-import Lumber
 
 internal protocol LootManagerDelegate {
     func loot(_ lootManager: LootManager, didBecomeReadyWithProducts products: [SKProduct]) -> Void
@@ -16,8 +15,6 @@ internal protocol LootManagerDelegate {
 }
 
 internal class LootManager: NSObject {
-    
-    var lumber: Lumber = Lumber()
     
     var productIDs: Set<String>
     var products: [SKProduct] = []
@@ -29,7 +26,7 @@ internal class LootManager: NSObject {
         
         super.init()
         
-        self.lumber.log("Begin Product Request")
+        Swift.print("Begin Product Request")
         
         let request = SKProductsRequest(productIdentifiers: self.productIDs)
         request.delegate = self
@@ -39,19 +36,19 @@ internal class LootManager: NSObject {
     }
 
     public func beginPurchase(with productIDs: [String]) {
-        self.lumber.log("Begin Purchase: \(productIDs)")
+        Swift.print("Begin Purchase: \(productIDs)")
         
         productIDs.forEach { (productID) in
             if SKPaymentQueue.canMakePayments() {
                 if let product = self.products.first(where: { $0.productIdentifier == productID }) {
                     SKPaymentQueue.default().add(SKPayment(product: product))
                 } else {
-                    self.lumber.log("No products matched productIDs")
+                    Swift.print("No products matched productIDs")
                     
                     self.delegate?.loot(self, didFinishWithResult: .failure(productID))
                 }
             } else {
-                self.lumber.log("Product purchases unavailable!")
+                Swift.print("Product purchases unavailable!")
                 
                 self.delegate?.loot(self, didFinishWithResult: .failure(productID))
             }
@@ -59,7 +56,7 @@ internal class LootManager: NSObject {
     }
 
     public func beginRestore() {
-        self.lumber.log("Begin Restore")
+        Swift.print("Begin Restore")
         
         SKPaymentQueue.default().restoreCompletedTransactions()
     }
@@ -73,7 +70,7 @@ extension LootManager: SKProductsRequestDelegate {
         
         self.delegate?.loot(self, didBecomeReadyWithProducts: self.products)
         
-        self.lumber.log("Products Received: \(self.products)")
+        Swift.print("Products Received: \(self.products)")
     }
     
 }
@@ -84,8 +81,8 @@ extension LootManager: SKPaymentTransactionObserver {
         for transaction in transactions {
             let productID = transaction.payment.productIdentifier
 
-            self.lumber.log("Payment Queue Updated (Product ID): \(productID)")
-            self.lumber.log("Payment Queue Updated (Transaction State): \(transaction.transactionState)")
+            Swift.print("Payment Queue Updated (Product ID): \(productID)")
+            Swift.print("Payment Queue Updated (Transaction State): \(transaction.transactionState)")
             
             switch transaction.transactionState {
             case .purchasing:
@@ -112,8 +109,8 @@ extension LootManager: SKPaymentTransactionObserver {
         for transaction in queue.transactions {
             let productID = transaction.payment.productIdentifier
             
-            self.lumber.log("Payment Queue Restore (Product ID): \(productID)")
-            self.lumber.log("Payment Queue Restore (Transaction State): \(transaction.transactionState)")
+            Swift.print("Payment Queue Restore (Product ID): \(productID)")
+            Swift.print("Payment Queue Restore (Transaction State): \(transaction.transactionState)")
             
             switch transaction.transactionState {
             case .restored:

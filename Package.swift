@@ -16,13 +16,9 @@ let package = Package(
             name: "Loot",
             targets: ["Loot"])
     ],
-    dependencies: [
-        .package(url: "https://github.com/infinitetoken/Lumber-Swift", from: "2.0.0")
-    ],
     targets: [
         .target(
             name: "Loot",
-            dependencies: ["Lumber"],
             path: "Sources"),
         .testTarget(
             name: "LootTests",
